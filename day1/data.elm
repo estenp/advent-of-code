@@ -1,7 +1,20 @@
-module Data exposing (linesIn)
+module Data exposing (linesIn, sample)
+
+
+sample =
+    """
+    two1nine
+    eightwothree
+    abcone2threexyz
+    xtwone3four
+    4nineeightseven2
+    zoneight234
+    7pqrstsixteen
+    """
+
 
 linesIn =
-  """
+    """
     xt36five77
     two8five6zfrtjj
     eightthree8fiveqjgsdzgnnineeight
