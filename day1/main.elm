@@ -1,60 +1,111 @@
 module Main exposing (..)
 
 import Data exposing (sample)
-import Html exposing (text)
+import Dict
+import Html exposing (a, text)
+import Html.Attributes exposing (accept)
+
+
 
 -- todo: need to search for the words in the string, not just replace them
 -- from left and from right, first word found is converted
 -- so basically search for word until you hit a number
 
+
 calibrate : String -> Int
 calibrate =
     Debug.log "pre-swapped"
-        >> swapNumWords
         -- `lines` here is more semantic, but results in extra whitespace to clean up
         >> String.words
-        >> Debug.log "swapped"
-        >> List.map toDoubleDigInt
-        >> Debug.log "doubled"
+        >> Debug.log "preEval"
+        >> List.map evaluateLine
+        >> Debug.log "evald"
         >> List.sum
 
+numDict : Dict.Dict String Char
+numDict =
+    Dict.fromList
+        [ ( "nine", '9' )
+        , ( "eight", '8' )
+        , ( "seven", '7' )
+        , ( "six", '6' )
+        , ( "five", '5' )
+        , ( "four", '4' )
+        , ( "three", '3' )
+        , ( "two", '2' )
+        , ( "one", '1' )
+        ]
 
-swapNumWords : String -> String
-swapNumWords =
-    String.replace "nine" "9"
-        >> String.replace "eight" "8"
-        >> String.replace "seven" "7"
-        >> String.replace "six" "6"
-        >> String.replace "five" "5"
-        >> String.replace "four" "4"
-        >> String.replace "three" "3"
-        >> String.replace "two" "2"
-        >> String.replace "one" "1"
 
 
-toDoubleDigInt : String -> Int
-toDoubleDigInt line =
+{- Take a line of characters and return the double digit value of this lane (left and right digits). -}
+
+
+evaluateLine : String -> Int
+evaluateLine line =
     let
-        filtered =
-            line
-                |> String.toList
-                |> List.map String.fromChar
-                |> List.filterMap String.toInt
+        -- convert to list of chars
+        lineAsList : List Char
+        lineAsList =
+            String.toList line
 
-        left =
-            filtered
-                |> List.head
-                |> Maybe.withDefault 0
+        toDigitSingleton : String -> Char -> List Char -> List Char
+        toDigitSingleton direction char acc =
+            let
+                _ = Debug.log "check" char
+                assessChar =
+                    if Char.isDigit char then
+                        [ char ]
 
-        right =
-            filtered
-                |> List.reverse
-                |> List.head
-                |> Maybe.withDefault 0
+                    else
+                        let
+                            newAcc =
+                                if direction == "left" then acc ++ [ char ] else [ char ] :: acc
+
+                            wordIsNum =
+                                newAcc
+                                    |> String.fromList
+                                    |> (\k -> Dict.get k numDict)
+                        in
+                        case wordIsNum of
+                            Just val ->
+                                [ val ]
+
+                            Nothing ->
+                                newAcc
+            in
+            case acc of
+                [] ->
+                    -- if empty accumulator assess char
+                    assessChar
+
+                x :: _ ->
+                    -- if acc has val, assess it
+                    if Char.isDigit x then
+                        acc
+
+                    else
+                        assessChar
+
+        l =
+          lineAsList
+            |> List.foldl (toDigitSingleton "left") []
+            |> List.map String.fromChar
+            |> List.head
+            |> Maybe.withDefault "0"
+
+        r =
+            lineAsList
+              |> List.foldr (toDigitSingleton "right") []
+              |> List.map String.fromChar
+              |> List.head
+              |> Maybe.withDefault "0"
+
+        _ = Debug.log "l and r" (l, r)
+
 
         doubleDigit =
-            String.fromInt left
-                ++ String.fromInt right
+            l ++ r
                 |> String.toInt
                 |> Maybe.withDefault 0
     in
