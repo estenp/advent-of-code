@@ -51,7 +51,7 @@ evaluateLine line =
         {- Takes a direction to associate with fold direction, and returns a reducer/step which finds the first digit -
            actual, or a word representing one.
         -}
-        toOuterNumber : String -> Char -> String -> String
+        toOuterNumber : Direction -> Char -> String -> String
         toOuterNumber direction char acc =
             -- if acc is a digit, we've found so just loop out while retaining it
             if acc |> String.toList |> List.head |> Maybe.withDefault '_' |> Char.isDigit then
@@ -65,7 +65,7 @@ evaluateLine line =
             else
                 let
                     newAcc =
-                        if direction == "left" then
+                        if direction == Left then
                             acc ++ String.fromChar char
 
                         else
@@ -85,13 +85,15 @@ evaluateLine line =
 
         l =
             lineAsList
-                |> List.foldl (toOuterNumber "left") ""
+                |> List.foldl (toOuterNumber Left) ""
 
         r =
             lineAsList
-                |> List.foldr (toOuterNumber "right") ""
+                |> List.foldr (toOuterNumber Right) ""
     in
     -- combine leftmost and rightmost numbers, convert string to Int
     l ++ r
         |> String.toInt
         |> Maybe.withDefault 0
+
+type Direction = Left | Right
