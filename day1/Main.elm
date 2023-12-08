@@ -56,12 +56,12 @@ evaluateLine line =
             -- if acc is a digit, we've found so just loop out while retaining it
             if acc |> String.toList |> List.head |> Maybe.withDefault '_' |> Char.isDigit then
                 acc
+                -- if the next char is an actual digit, we've just found so return as accumulator
 
-            -- if the next char is an actual digit, we've just found so return as accumulator
             else if Char.isDigit char then
                 String.fromChar char
+                -- otherwise, see if new char creates a number word when added to accumulator string
 
-            -- otherwise, see if new char creates a number word when added to accumulator string
             else
                 let
                     newAcc =
@@ -90,8 +90,6 @@ evaluateLine line =
         r =
             lineAsList
                 |> List.foldr (toOuterNumber "right") ""
-
-
     in
     -- combine leftmost and rightmost numbers, convert string to Int
     l ++ r
