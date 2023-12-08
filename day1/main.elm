@@ -1,44 +1,35 @@
 module Main exposing (..)
 
-import Data exposing (sample)
+import Data exposing (linesIn)
 import Dict
-import Html exposing (a, text)
-import Html.Attributes exposing (accept)
-
-
-
--- todo: need to search for the words in the string, not just replace them
--- from left and from right, first word found is converted
--- so basically search for word until you hit a number
+import Html exposing (text)
 
 
 calibrate : String -> Int
 calibrate =
-    Debug.log "pre-swapped"
-        -- `lines` here is more semantic, but results in extra whitespace to clean up
-        >> String.words
-        >> Debug.log "preEval"
+    -- `lines` here is more semantic, but results in extra whitespace to clean up
+    String.words
         >> List.map evaluateLine
-        >> Debug.log "evald"
         >> List.sum
 
-numDict : Dict.Dict String Char
+
+numDict : Dict.Dict String String
 numDict =
     Dict.fromList
-        [ ( "nine", '9' )
-        , ( "eight", '8' )
-        , ( "seven", '7' )
-        , ( "six", '6' )
-        , ( "five", '5' )
-        , ( "four", '4' )
-        , ( "three", '3' )
-        , ( "two", '2' )
-        , ( "one", '1' )
+        [ ( "nine", "9" )
+        , ( "eight", "8" )
+        , ( "seven", "7" )
+        , ( "six", "6" )
+        , ( "five", "5" )
+        , ( "four", "4" )
+        , ( "three", "3" )
+        , ( "two", "2" )
+        , ( "one", "1" )
         ]
 
 
 
-{- Take a line of characters and return the double digit value of this lane (left and right digits). -}
+{- Take a line of characters and return the double digit value of this line (left and right digits). -}
 
 
 evaluateLine : String -> Int
@@ -49,72 +40,60 @@ evaluateLine line =
         lineAsList =
             String.toList line
 
-        toDigitSingleton : String -> Char -> List Char -> List Char
-        toDigitSingleton direction char acc =
-            let
-                _ = Debug.log "check" char
-                assessChar =
-                    if Char.isDigit char then
-                        [ char ]
+        {- Takes a direction to associate with fold direction, and returns a reducer/step which finds the first digit -
+           actual, or a word representing one.
+        -}
+        toOuterNumber : String -> Char -> String -> String
+        toOuterNumber direction char acc =
+            -- if acc is a digit, we've found so just loop out while retaining it
+            if acc |> String.toList |> List.head |> Maybe.withDefault '_' |> Char.isDigit then
+                acc
 
-                    else
-                        let
-                            newAcc =
-                                if direction == "left" then acc ++ [ char ] else [ char ] :: acc
+            -- if the next char is an actual digit, we've just found so return as accumulator
+            else if Char.isDigit char then
+                String.fromChar char
 
-                            wordIsNum =
-                                newAcc
-                                    |> String.fromList
-                                    |> (\k -> Dict.get k numDict)
-                        in
-                        case wordIsNum of
-                            Just val ->
-                                [ val ]
+            -- otherwise, see if new char creates a number word when added to accumulator string
+            else
+                let
+                    newAcc =
+                        if direction == "left" then
+                            acc ++ String.fromChar char
 
-                            Nothing ->
-                                newAcc
-            in
-            case acc of
-                [] ->
-                    -- if empty accumulator assess char
-                    assessChar
+                        else
+                            String.fromChar char ++ acc
 
-                x :: _ ->
-                    -- if acc has val, assess it
-                    if Char.isDigit x then
-                        acc
+                    containsNumberWord =
+                        Dict.keys numDict |> List.filter (\s -> String.contains s newAcc)
+                in
+                case containsNumberWord of
+                    -- no word found, keep iterating
+                    [] ->
+                        newAcc
 
-                    else
-                        assessChar
+                    -- word found, lookup digit value and return as accumulator
+                    x :: _ ->
+                        Dict.get x numDict |> Maybe.withDefault newAcc
 
         l =
-          lineAsList
-            |> List.foldl (toDigitSingleton "left") []
-            |> List.map String.fromChar
-            |> List.head
-            |> Maybe.withDefault "0"
+            lineAsList
+                |> List.foldl (toOuterNumber "left") ""
 
         r =
             lineAsList
-              |> List.foldr (toDigitSingleton "right") []
-              |> List.map String.fromChar
-              |> List.head
-              |> Maybe.withDefault "0"
-
-        _ = Debug.log "l and r" (l, r)
+                |> List.foldr (toOuterNumber "right") ""
 
 
-        doubleDigit =
-            l ++ r
-                |> String.toInt
-                |> Maybe.withDefault 0
     in
-    doubleDigit
+    -- combine leftmost and rightmost numbers, convert string to Int
+    l ++ r
+        |> String.toInt
+        |> Maybe.withDefault 0
 
 
 main : Html.Html msg
 main =
-    sample
+    linesIn
         |> calibrate
         |> String.fromInt
         |> text

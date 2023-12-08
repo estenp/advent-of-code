@@ -13,6 +13,13 @@ sample =
     """
 
 
+
+{- In this example, the calibration values are
+   29, 83, 13, 24, 42, 14, and 76.
+   Adding these together produces 281.
+-}
+
+
 linesIn =
     """
     xt36five77
