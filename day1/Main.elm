@@ -5,6 +5,14 @@ import Dict
 import Html exposing (text)
 
 
+main : Html.Html msg
+main =
+    linesIn
+        |> calibrate
+        |> String.fromInt
+        |> text
+
+
 calibrate : String -> Int
 calibrate =
     -- `lines` here is more semantic, but results in extra whitespace to clean up
@@ -89,11 +97,3 @@ evaluateLine line =
     l ++ r
         |> String.toInt
         |> Maybe.withDefault 0
-
-
-main : Html.Html msg
-main =
-    linesIn
-        |> calibrate
-        |> String.fromInt
-        |> text
