@@ -4,7 +4,7 @@
 
 This project is (so far) written with Elm.
 
-Elm can be insalled by following instructions on [here](https://guide.elm-lang.org/install/elm.html).
+Elm can be insalled by following instructions [here](https://guide.elm-lang.org/install/elm.html).
 
 ## Running
 
