@@ -1,13 +1,13 @@
-module Main exposing (..)
+module One exposing (..)
 
-import Data exposing (linesIn)
+import Data exposing (day1LinesIn)
 import Dict
 import Html exposing (text)
 
 
 main : Html.Html msg
 main =
-    linesIn
+    day1LinesIn
         |> calibrate
         |> String.fromInt
         |> text
