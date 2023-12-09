@@ -4543,15 +4543,11 @@ var $elm$core$Dict$get = F2(
 			}
 		}
 	});
-var $elm$core$List$head = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return $elm$core$Maybe$Just(x);
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
-};
+var $elm$core$String$slice = _String_slice;
+var $elm$core$String$left = F2(
+	function (n, string) {
+		return (n < 1) ? '' : A3($elm$core$String$slice, 0, n, string);
+	});
 var $elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
 var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
 var $elm$core$Dict$Black = {$: 'Black'};
@@ -4703,23 +4699,26 @@ var $elm$core$Maybe$withDefault = F2(
 	});
 var $author$project$Main$evaluateLine = function (line) {
 	var toOuterNumber = F3(
-		function (direction, _char, acc) {
-			if ($elm$core$Char$isDigit(
-				A2(
-					$elm$core$Maybe$withDefault,
-					_Utils_chr('_'),
-					$elm$core$List$head(
-						$elm$core$String$toList(acc))))) {
+		function (direction, nextChar, acc) {
+			var _v0 = $elm$core$String$toInt(
+				A2($elm$core$String$left, 1, acc));
+			if (_v0.$ === 'Just') {
 				return acc;
 			} else {
-				if ($elm$core$Char$isDigit(_char)) {
-					return $elm$core$String$fromChar(_char);
+				if ($elm$core$Char$isDigit(nextChar)) {
+					return $elm$core$String$fromChar(nextChar);
 				} else {
-					var newAcc = _Utils_eq(direction, $author$project$Main$Left) ? _Utils_ap(
-						acc,
-						$elm$core$String$fromChar(_char)) : _Utils_ap(
-						$elm$core$String$fromChar(_char),
-						acc);
+					var newAcc = function () {
+						if (direction.$ === 'Left') {
+							return _Utils_ap(
+								acc,
+								$elm$core$String$fromChar(nextChar));
+						} else {
+							return _Utils_ap(
+								$elm$core$String$fromChar(nextChar),
+								acc);
+						}
+					}();
 					var containsNumberWord = A2(
 						$elm$core$List$filter,
 						function (s) {
