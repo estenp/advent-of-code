@@ -1,6 +1,7 @@
 module Two exposing (..)
 
-import Data exposing (day2LinesIn, day2Sample)
+import Data exposing (day2LinesIn)
+import Utils exposing (trimLines)
 import Dict
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -17,10 +18,6 @@ bagContents : ColorCounts
 bagContents =
     { red = 12, green = 13, blue = 14 }
 
-
-trimLines : List String -> List String
-trimLines =
-    List.map String.trim >> List.filter (\l -> l /= "")
 
 
 twoListToTuple : List String -> ( String, String )
@@ -46,7 +43,7 @@ main =
         -- represent via dictionary with game id as key
         |> List.map parseToColorCounts
         |> Dict.fromList
-        |> Dict.foldl sumPassingIds 0
+        |> Dict.foldl sumPower 0
         |> String.fromInt
         |> text
 
@@ -109,10 +106,5 @@ parseToColorCounts line =
         |> Tuple.mapSecond parseCounts
 
 
-sumPassingIds : Int -> ColorCounts -> Int -> Int
-sumPassingIds id game acc =
-    if game.blue <= bagContents.blue && game.red <= bagContents.red && game.green <= bagContents.green then
-        id + acc
-
-    else
-        acc
+sumPower : Int -> ColorCounts -> Int -> Int
+sumPower id game acc = (game.blue * game.green * game.red) + acc
