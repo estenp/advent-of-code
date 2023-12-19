@@ -1,8 +1,9 @@
 module Three exposing (..)
 
 import Array
-import Data exposing (day3Sample)
-import Dict
+import Char exposing (isDigit)
+import Data exposing (day3Sample, day3LinesIn)
+import Dict exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import List.Extra as ListExtra
@@ -10,9 +11,10 @@ import Utils exposing (trimLines)
 
 
 main =
+    -- input parsing and validation/sanitization
     let
         input =
-            day3Sample
+            day3LinesIn
                 |> String.lines
                 |> trimLines
 
@@ -34,138 +36,156 @@ main =
         Debug.todo "Problem with validation"
 
 
+
+-- Main function
+
+
 sumPartNums : List String -> Int
 sumPartNums lines =
     let
-        schematic : Dict.Dict Int String
-        schematic =
-            Dict.fromList (List.indexedMap Tuple.pair lines)
+        -- todo: move to Util module
+        listToIndexedList : List b -> List ( Int, b )
+        listToIndexedList list =
+            List.indexedMap Tuple.pair list
 
-        -- _ =
-        --     Dict.map
-        --         (\k v ->
-        --             String.toList v
-        --                 |> List.map
-        --                     (\c ->
-        --                         if Char.isDigit c then
-        --                             c
+        indexedChars =
+            lines
+                |> List.map (\str -> String.toList str |> listToIndexedList)
+                |> listToIndexedList
 
-        --                         else
-        --                             ' '
-        --                     )
-        --                 -- |> String.fromList
-        --                 -- |> String.words
-        --         )
-        --         schematic
-        --         |> Debug.log "filter nums"
+        filterDigits : List IndexedChar -> List IndexedChar
+        filterDigits =
+            List.filter (\( _, c ) -> Char.isDigit c)
 
-        -- fold over dictionary so index of row is available
-        partNumList =
-            Dict.foldl (\k v a -> a ++ rowToPartnums k v) [] schematic
+        digitsOnly : List ( Int, List IndexedChar )
+        digitsOnly =
+            indexedChars
+                |> List.map (Tuple.mapSecond filterDigits)
 
-        -- in reducer, fold each value into list of part nums
-        rowToPartnums : Int -> String -> List Int
-        rowToPartnums rowIndex rowStr =
-            rowStr
-                |> String.toList
-                |> ListExtra.indexedFoldl
-                    (\colIndex char acc ->
-                        case maybeValidPartNum rowIndex colIndex char of
-                            Just partNum ->
-                                partNum :: acc
+        -- we have digit only lists
+        -- we want to parse each line (List) and accumulate each sequential item as a number, tracking it's index range
+        groupNumDigits : IndexedChar -> NumAccumulator -> NumAccumulator
+        groupNumDigits ( index, digit ) acc =
+            if index == (acc.lastIndex + 1) then
+                -- if index is one greater than last index, continue accumulating number
+                { acc | lastIndex = index, numAcc = acc.numAcc ++ [ ( index, digit ) ] }
 
-                            Nothing ->
-                                acc
-                    )
-                    []
-                |> Debug.log "check"
+            else
+                -- close the current number
+                { acc | lastIndex = index, digitList = acc.digitList ++ [ acc.numAcc ], numAcc = [ ( index, digit ) ] }
 
-        -- check a char for adjacent symbols
-        maybeValidPartNum : Int -> Int -> Char -> Maybe Int
-        maybeValidPartNum rowIndex colIndex char =
+        -- for each number we've found, check for adjacent symbols
+        -- check current row -> 1 less than first index, 1 more than last index
+        -- check previous row -> 1 less than first index through 1 more than last index
+        -- check following row -> 1 less than first index through 1 more than last index
+        -- e.g. prev row indices: -1 0 1 2 3
+        -- `isSymbol`
+        numAccToIndexRanges : NumAccumulator -> List ( Int, ( Int, Int ) )
+        numAccToIndexRanges acc =
             let
-                currRow =
-                    Dict.get rowIndex schematic
+                finalDigitListFromAcc : List (List IndexedChar)
+                finalDigitListFromAcc =
+                    acc.digitList ++ [ acc.numAcc ] |> List.filter (\a -> a /= [])
 
-                prevRow =
-                    Dict.get (rowIndex - 1) schematic
+                -- [(0,'4'),(1,'6'),(2,'7')] -> (467, (0, 2))
+                toRangeLookup : List IndexedChar -> List ( Int, ( Int, Int ) ) -> List ( Int, ( Int, Int ) )
+                toRangeLookup charList lookupList =
+                    let
+                        firstIdx =
+                            charList |> List.head |> Maybe.withDefault ( 0, ' ' ) |> Tuple.first
 
-                nextRow =
-                    Dict.get (rowIndex + 1) schematic
+                        lastIdx =
+                            charList |> List.reverse |> List.head |> Maybe.withDefault ( 0, ' ' ) |> Tuple.first
 
-                isValidChar c =
-                    not (Char.isAlphaNum c) && (c /= '.')
+                        partNum =
+                            List.foldl (\( _, c ) a -> a ++ String.fromChar c) "" charList |> String.toInt |> Maybe.withDefault 0
+                    in
+                    ( partNum, ( firstIdx, lastIdx ) ) :: lookupList
+            in
+            List.foldl toRangeLookup [] finalDigitListFromAcc
 
-                adjacent row =
-                    case row of
-                        Just lineStr ->
-                            let
-                                checkByIndex i =
-                                    case String.toList lineStr |> Array.fromList |> Array.get i of
-                                        Just c ->
-                                            isValidChar c
+        -- Dict.fromList [(467, (0, 2))]
+        numberCatalogue : List (Int, NumberLookup)
+        numberCatalogue =
+            let
+                groupedDigits = List.foldl groupNumDigits { lastIndex = -1, digitList = [], numAcc = [] }
+            in
 
-                                        Nothing ->
+                digitsOnly
+                    |> List.map (Tuple.mapSecond (groupedDigits >> numAccToIndexRanges))
+                    |> List.filter (\( _, list ) -> list /= [])
+
+        hasAdjacentSymbol : Int -> (Int, Int) -> Bool
+        hasAdjacentSymbol rowIndex tup =
+            let
+                -- takes row index and range tuple and figures out if there are adjacent symbols
+                curr = indexedChars |> List.filter (\(i, _) -> i == (rowIndex))
+                above = indexedChars |> List.filter (\(i, _) -> i == (rowIndex - 1))
+                below = indexedChars |> List.filter (\(i, _) -> i == (rowIndex + 1))
+
+                hasChars row  =
+                    case List.head row of
+                        -- if there is a row above this row, fold over it to return true if it has a symbol within it's y ranges
+                        Just (_, charList) ->
+                            charList |> List.foldl (\(i, c) a ->
+                                if a == False then
+                                    let
+                                        leftRange = Tuple.first tup
+                                        rightRange = Tuple.second tup
+                                        isSymbol = c /= '.' && not (Char.isAlphaNum c)
+
+                                    in
+                                        if isSymbol && i >= leftRange - 1 && i <= rightRange + 1 then
+                                            True
+                                        else
                                             False
-
-                                left =
-                                    checkByIndex (colIndex - 1)
-
-                                mid =
-                                    checkByIndex colIndex
-
-                                right =
-                                    checkByIndex (colIndex + 1)
-                            in
-                            left || mid || right
-
+                                else a
+                            ) False
                         Nothing ->
                             False
 
-                isAdjacentToSymbol =
-                    adjacent prevRow || adjacent nextRow || adjacent currRow
-
-                rowToIndexedList : List ( Int, Char )
-                rowToIndexedList = case currRow of
-                        Just rowString ->
-                            rowString
-                                |> String.toList
-                                |> Array.fromList
-                                |> Array.toIndexedList
-                                |> Debug.log "indexed list"
-                                -- |> Debug.todo "asdf"
-                        Nothing ->
-                            0
-
-                gatherPartNum li ri acc =
-                    if (li == Nothing) && (ri == Nothing) then
-                        acc
-                    else
-                        let
-                            -- check l and r index for numbers
-                            -- if found add to acc
-
-                            -- this seems like a Maybe.map thing or something?
-                            left = case (ListExtra.find (\t -> (Tuple.first t) == li) rowToIndexedList) of
-                                Just t ->
-                                    (Tuple.first t) - 1
-                                Nothing ->
-                                    Nothing
-
-
-                            -- base case
-                            -- if li has no number and ri has no number stop and return acc
-                        in
-                            gatherPartNum (li - 1) (ri + 1) acc
-
-
-
             in
-            if Char.isDigit char && isAdjacentToSymbol then
-                Just (gatherPartNum (colIndex - 1))
-            else
-                Nothing
+                hasChars above
+                || hasChars below
+                || hasChars curr
+
+        toPartNums : (Int, NumberLookup) -> List Int
+        toPartNums (rowIndex, numList) =
+            numList
+                |> List.filter (\(_, rangeTup) -> hasAdjacentSymbol rowIndex rangeTup)
+                |> List.map Tuple.first
+
+
+        partNumList : List Int
+        partNumList =
+            numberCatalogue
+                -- check each row that contains numbers
+                -- for every number, seach adjacent cells for symbols
+                |> List.map toPartNums
+                |> List.filter (\l -> l /= [])
+                |> List.concat
+
+
     in
     partNumList
-        -- |> List.map (String.fromChar >> String.toInt >> Maybe.withDefault 0)
         |> List.sum
+
+
+
+type alias IndexedChar =
+    ( Int, Char )
+
+
+type alias NumAccumulator =
+    { lastIndex : Int
+    , digitList : List (List IndexedChar)
+    , numAcc : List IndexedChar
+    }
+
+
+type alias CharIndexRange =
+    ( Int, Int )
+
+
+type alias NumberLookup =
+    List (Int, CharIndexRange)
