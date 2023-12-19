@@ -115,44 +115,52 @@ sumPartNums lines =
                     |> List.map (Tuple.mapSecond (groupedDigits >> numAccToIndexRanges))
                     |> List.filter (\( _, list ) -> list /= [])
 
-        hasAdjacentSymbol : Int -> (Int, Int) -> Bool
-        hasAdjacentSymbol rowIndex tup =
+        hasAdjacentAsterisk : Int -> (Int, Int) -> List (Maybe (Int, Int))
+        hasAdjacentAsterisk rowIndex tup =
             let
                 -- takes row index and range tuple and figures out if there are adjacent symbols
                 curr = indexedChars |> List.filter (\(i, _) -> i == (rowIndex))
                 above = indexedChars |> List.filter (\(i, _) -> i == (rowIndex - 1))
                 below = indexedChars |> List.filter (\(i, _) -> i == (rowIndex + 1))
 
-                hasChars row  =
+                hasAsterisk : List ( Int, List ( Int, Char ) ) -> (Maybe ( Int, Int ))
+                hasAsterisk row  =
                     case List.head row of
-                        -- if there is a row above this row, fold over it to return true if it has a symbol within it's y ranges
                         Just (_, charList) ->
                             charList |> List.foldl (\(i, c) a ->
-                                if a == False then
-                                    let
-                                        leftRange = Tuple.first tup
-                                        rightRange = Tuple.second tup
-                                        isSymbol = c /= '.' && not (Char.isAlphaNum c)
+                                case a of
+                                    Just x ->
+                                        let
+                                            leftRange = Tuple.first tup
+                                            rightRange = Tuple.second tup
+                                            isAsterisk = c == '*'
 
-                                    in
-                                        if isSymbol && i >= leftRange - 1 && i <= rightRange + 1 then
-                                            True
-                                        else
-                                            False
-                                else a
-                            ) False
+                                        in
+                                            if isAsterisk && i >= leftRange - 1 && i <= rightRange + 1 then
+                                                (rowIndex, i) :: x
+                                            else
+                                                x
+                                    Nothing -> a
+                            ) Nothing
                         Nothing ->
-                            False
+                            []
+                adjacentAstrisks = [ hasAsterisk curr, hasAsterisk above, hasAsterisk below ]
 
             in
-                hasChars above
-                || hasChars below
-                || hasChars curr
+                adjacentAstrisks
 
         toPartNums : (Int, NumberLookup) -> List Int
         toPartNums (rowIndex, numList) =
             numList
-                |> List.filter (\(_, rangeTup) -> hasAdjacentSymbol rowIndex rangeTup)
+                -- |> List.filter (\(num, rangeTup) -> hasAdjacentSymbol rowIndex rangeTup)
+                -- map numbers to a tuple of the number and a list of it's adjacent astrisk coordinates
+                |> List.map (\(num, rangeTup) ->
+                        case hasAdjacentAsterisk rowIndex rangeTup of
+                            x ->
+                                (num, x)
+                            [] ->
+                                (num, [])
+                    )
                 |> List.map Tuple.first
 
 
@@ -189,3 +197,8 @@ type alias CharIndexRange =
 
 type alias NumberLookup =
     List (Int, CharIndexRange)
+
+{- for part 2
+when looping nums, check if they are connected to a * and if so log the coordinates ofit
+
+ -}
