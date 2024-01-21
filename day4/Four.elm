@@ -18,7 +18,7 @@ validate =
 main =
     let
         input =
-            day4LinesIn
+            day4Sample
                 |> String.lines
                 |> trimLines
     in
@@ -26,8 +26,9 @@ main =
         Ok strs ->
             strs
                 |> List.map parseCard
-                |> List.map calcCard
-                |> List.sum
+                |> List.map (Tuple.mapSecond winnerCount)
+                |> makeCopies
+                -- |> List.length
                 |> Debug.toString
                 |> text
 
@@ -35,29 +36,27 @@ main =
             Debug.todo msg
 
 
-parseCard : String -> List (List Int)
+
+-- parseCard : String -> List (List Int)
+
+
 parseCard =
     String.split ":"
         >> twoListToTuple
         >> Maybe.withDefault ( "", "" )
-        >> Tuple.second
-        >> String.split "|"
-        >> List.map (String.split " " >> List.filterMap String.toInt)
+        >> Tuple.mapFirst (String.dropLeft 5 >> String.trim >> String.toInt >> Maybe.withDefault -1)
+        >> Tuple.mapSecond (String.split "|")
+        >> Tuple.mapSecond (List.map (String.split " " >> List.filterMap String.toInt))
+        >> Debug.log "parseCard"
 
 
-calcCard : List (List Int) -> Int
-calcCard cardNums =
-    -- fold over winners (since it's smaller list) and check for each number in hand, accumulating points value as matches are found
+winnerCount cardNums =
     case twoListToTuple cardNums of
         Just ( winners, hand ) ->
             List.foldl
                 (\c a ->
                     if List.member c hand then
-                        if a == 0 then
-                            1
-
-                        else
-                            a * 2
+                        a + 1
 
                     else
                         a
@@ -67,3 +66,19 @@ calcCard cardNums =
 
         Nothing ->
             0
+
+
+
+-- have to update list in place, so probably will require recursive function instead
+
+
+makeCopies cards =
+    cards
+        |> List.concatMap
+            (\( id, winners ) ->
+                let
+                    copies =
+                        List.filter (\( i, w ) -> i > id && i <= id + winners) cards
+                in
+                [ ( id, winners ) ] ++ copies |> Debug.log "copies"
+            )
