@@ -8,4 +8,4 @@ Elm can be insalled by following instructions [here](https://guide.elm-lang.org/
 
 ## Running
 
-The best way to run specific days is to use the `elm reactor` command, then navigating to the day you want to run. Clicking on the `Main.elm` file will compile and run the code, displaying any output in the browser.
+The best way to run specific days is to use the `elm reactor` command, then navigating to the day you want to run. Clicking on the `*.elm` file will compile and run the code, displaying any output in the browser.

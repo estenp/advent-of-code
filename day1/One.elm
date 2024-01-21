@@ -53,36 +53,38 @@ evaluateLine line =
         -}
         toOuterNumber : Direction -> Char -> String -> String
         toOuterNumber direction nextChar acc =
-
             case String.toInt (String.left 1 acc) of
-                    -- if first char of acc can be converted to Int, we've found digit so loop out
-                    Just _ ->
-                        acc
-                    -- otherwise take next char and proceed
-                    Nothing ->
-                        if Char.isDigit nextChar then
-                            String.fromChar nextChar
-                        else
-                            -- otherwise, see if new char creates a number word when added to accumulator string
-                            let
-                                newAcc =
-                                    case direction of
-                                        Left ->
-                                            acc ++ String.fromChar nextChar
-                                        Right ->
-                                            String.fromChar nextChar ++ acc
+                -- if first char of acc can be converted to Int, we've found digit so loop out
+                Just _ ->
+                    acc
 
-                                containsNumberWord =
-                                    Dict.keys numDict |> List.filter (\s -> String.contains s newAcc)
-                            in
-                            case containsNumberWord of
-                                -- no word found, keep iterating
-                                [] ->
-                                    newAcc
+                -- otherwise take next char and proceed
+                Nothing ->
+                    if Char.isDigit nextChar then
+                        String.fromChar nextChar
 
-                                -- word found, lookup digit value and return as accumulator
-                                x :: _ ->
-                                    Dict.get x numDict |> Maybe.withDefault newAcc
+                    else
+                        -- otherwise, see if new char creates a number word when added to accumulator string
+                        let
+                            newAcc =
+                                case direction of
+                                    Left ->
+                                        acc ++ String.fromChar nextChar
+
+                                    Right ->
+                                        String.fromChar nextChar ++ acc
+
+                            containsNumberWord =
+                                Dict.keys numDict |> List.filter (\s -> String.contains s newAcc)
+                        in
+                        case containsNumberWord of
+                            -- no word found, keep iterating
+                            [] ->
+                                newAcc
+
+                            -- word found, lookup digit value and return as accumulator
+                            x :: _ ->
+                                Dict.get x numDict |> Maybe.withDefault newAcc
 
         l =
             lineAsList
@@ -93,8 +95,12 @@ evaluateLine line =
                 |> List.foldr (toOuterNumber Right) ""
     in
     -- combine leftmost and rightmost numbers, convert string to Int
-    l ++ r
+    l
+        ++ r
         |> String.toInt
         |> Maybe.withDefault 0
 
-type Direction = Left | Right
+
+type Direction
+    = Left
+    | Right

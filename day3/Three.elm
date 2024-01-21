@@ -2,7 +2,7 @@ module Three exposing (..)
 
 import Array
 import Char exposing (isDigit)
-import Data exposing (day3Sample, day3LinesIn)
+import Data exposing (day3LinesIn, day3Sample)
 import Dict exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -105,64 +105,82 @@ sumPartNums lines =
             List.foldl toRangeLookup [] finalDigitListFromAcc
 
         -- Dict.fromList [(467, (0, 2))]
-        numberCatalogue : List (Int, NumberLookup)
+        numberCatalogue : List ( Int, NumberLookup )
         numberCatalogue =
             let
-                groupedDigits = List.foldl groupNumDigits { lastIndex = -1, digitList = [], numAcc = [] }
+                groupedDigits =
+                    List.foldl groupNumDigits { lastIndex = -1, digitList = [], numAcc = [] }
             in
+            digitsOnly
+                |> List.map (Tuple.mapSecond (groupedDigits >> numAccToIndexRanges))
+                |> List.filter (\( _, list ) -> list /= [])
 
-                digitsOnly
-                    |> List.map (Tuple.mapSecond (groupedDigits >> numAccToIndexRanges))
-                    |> List.filter (\( _, list ) -> list /= [])
-
-        hasAdjacentAsterisk : Int -> (Int, Int) -> List (Maybe (Int, Int))
+        hasAdjacentAsterisk : Int -> ( Int, Int ) -> List (Maybe ( Int, Int ))
         hasAdjacentAsterisk rowIndex tup =
             let
                 -- takes row index and range tuple and figures out if there are adjacent symbols
-                curr = indexedChars |> List.filter (\(i, _) -> i == (rowIndex))
-                above = indexedChars |> List.filter (\(i, _) -> i == (rowIndex - 1))
-                below = indexedChars |> List.filter (\(i, _) -> i == (rowIndex + 1))
+                curr =
+                    indexedChars |> List.filter (\( i, _ ) -> i == rowIndex)
 
-                hasAsterisk : List ( Int, List ( Int, Char ) ) -> (Maybe ( Int, Int ))
-                hasAsterisk row  =
+                above =
+                    indexedChars |> List.filter (\( i, _ ) -> i == (rowIndex - 1))
+
+                below =
+                    indexedChars |> List.filter (\( i, _ ) -> i == (rowIndex + 1))
+
+                hasAsterisk : List ( Int, List ( Int, Char ) ) -> Maybe ( Int, Int )
+                hasAsterisk row =
                     case List.head row of
-                        Just (_, charList) ->
-                            charList |> List.foldl (\(i, c) a ->
-                                case a of
-                                    Just x ->
-                                        let
-                                            leftRange = Tuple.first tup
-                                            rightRange = Tuple.second tup
-                                            isAsterisk = c == '*'
+                        Just ( _, charList ) ->
+                            charList
+                                |> List.foldl
+                                    (\( i, c ) a ->
+                                        case a of
+                                            Just x ->
+                                                let
+                                                    leftRange =
+                                                        Tuple.first tup
 
-                                        in
-                                            if isAsterisk && i >= leftRange - 1 && i <= rightRange + 1 then
-                                                (rowIndex, i) :: x
-                                            else
-                                                x
-                                    Nothing -> a
-                            ) Nothing
+                                                    rightRange =
+                                                        Tuple.second tup
+
+                                                    isAsterisk =
+                                                        c == '*'
+                                                in
+                                                if isAsterisk && i >= leftRange - 1 && i <= rightRange + 1 then
+                                                    ( rowIndex, i ) :: x
+
+                                                else
+                                                    x
+
+                                            Nothing ->
+                                                a
+                                    )
+                                    Nothing
+
                         Nothing ->
                             []
-                adjacentAstrisks = [ hasAsterisk curr, hasAsterisk above, hasAsterisk below ]
 
+                adjacentAstrisks =
+                    [ hasAsterisk curr, hasAsterisk above, hasAsterisk below ]
             in
-                adjacentAstrisks
+            adjacentAstrisks
 
-        toPartNums : (Int, NumberLookup) -> List Int
-        toPartNums (rowIndex, numList) =
+        toPartNums : ( Int, NumberLookup ) -> List Int
+        toPartNums ( rowIndex, numList ) =
             numList
                 -- |> List.filter (\(num, rangeTup) -> hasAdjacentSymbol rowIndex rangeTup)
                 -- map numbers to a tuple of the number and a list of it's adjacent astrisk coordinates
-                |> List.map (\(num, rangeTup) ->
+                |> List.map
+                    (\( num, rangeTup ) ->
                         case hasAdjacentAsterisk rowIndex rangeTup of
                             x ->
-                                (num, x)
+                                ( num, x )
+
                             [] ->
-                                (num, [])
+                                ( num, [] )
                     )
                 |> List.map Tuple.first
-
 
         partNumList : List Int
         partNumList =
@@ -172,12 +190,9 @@ sumPartNums lines =
                 |> List.map toPartNums
                 |> List.filter (\l -> l /= [])
                 |> List.concat
-
-
     in
     partNumList
         |> List.sum
-
 
 
 type alias IndexedChar =
@@ -196,9 +211,11 @@ type alias CharIndexRange =
 
 
 type alias NumberLookup =
-    List (Int, CharIndexRange)
+    List ( Int, CharIndexRange )
+
+
 
 {- for part 2
-when looping nums, check if they are connected to a * and if so log the coordinates ofit
+   when looping nums, check if they are connected to a * and if so log the coordinates ofit
 
- -}
+-}

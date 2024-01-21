@@ -1,10 +1,10 @@
 module Two exposing (..)
 
 import Data exposing (day2LinesIn)
-import Utils exposing (trimLines)
 import Dict
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Utils exposing (trimLines)
 
 
 type alias ColorCounts =
@@ -17,7 +17,6 @@ type alias ColorCounts =
 bagContents : ColorCounts
 bagContents =
     { red = 12, green = 13, blue = 14 }
-
 
 
 twoListToTuple : List String -> ( String, String )
@@ -39,6 +38,7 @@ main =
         -- to list of lines, then trim
         |> String.lines
         |> trimLines
+        |> Debug.log "here"
         -- parse each line to gather the max cubes exposed for each color
         -- represent via dictionary with game id as key
         |> List.map parseToColorCounts
@@ -53,6 +53,7 @@ parseToColorCounts line =
     let
         parseCounts =
             String.split ";"
+                >> Debug.log "parsing"
                 >> List.map String.trim
                 >> List.map (String.split ",")
                 >> List.concat
@@ -107,4 +108,5 @@ parseToColorCounts line =
 
 
 sumPower : Int -> ColorCounts -> Int -> Int
-sumPower id game acc = (game.blue * game.green * game.red) + acc
+sumPower id game acc =
+    (game.blue * game.green * game.red) + acc
