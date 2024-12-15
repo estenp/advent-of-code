@@ -1,28 +1,29 @@
-module Day1.One24 exposing (..)
+module Day1.A exposing (..)
 
-import Data24 exposing (sampleOne)
-import Dict
+import Data24 exposing (day1)
 import Html exposing (text)
 
 
 main : Html.Html msg
 main =
-    sampleOne
+    day1
         |> calcTotalDistance
+        |> String.fromInt
         |> text
 
 
-calcTotalDistance : String -> String
+calcTotalDistance : String -> Int
 calcTotalDistance s =
     let
+        asInts =
+            List.map (String.toInt >> Maybe.withDefault -1)
 
-        asInts = List.map (String.toInt >> Maybe.withDefault -1)
+        sortedAsInts =
+            asInts >> List.sort
 
-        sortedAsInts = asInts >> List.sort
-
-        pairs : List a -> List b -> List (a,b)
+        pairs : List a -> List b -> List ( a, b )
         pairs xs ys =
-          List.map2 Tuple.pair xs ys
+            List.map2 Tuple.pair xs ys
 
         ( left, right ) =
             s
@@ -39,11 +40,14 @@ calcTotalDistance s =
                                     _ ->
                                         ( "", "" )
                            )
-                     -- >> Tuple.mapBoth String.toInt String.toInt
+
                     )
                 |> List.unzip
                 |> Tuple.mapBoth sortedAsInts sortedAsInts
-                |> Debug.log "asdf"
-                |> List.map2 Tuple.pair
+
+        lowestPairs =
+            pairs left right
     in
-    "asdf"
+    lowestPairs
+        |> List.map (\( l, r ) -> abs (l - r))
+        |> List.sum
