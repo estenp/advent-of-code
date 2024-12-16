@@ -1,21 +1,37 @@
 module Day1.A exposing (..)
 
-import Data24 exposing (day1)
 import Html exposing (text)
+
+
+
+-- https://adventofcode.com/2024/day/1
+
+
+input =
+    """
+3   4
+4   3
+2   5
+1   3
+3   9
+3   3
+"""
 
 
 main : Html.Html msg
 main =
-    day1
+    input
         |> calcTotalDistance
-        |> String.fromInt
+        -- expected result
+        |> (==) 11
+        |> Debug.toString
         |> text
 
 
 calcTotalDistance : String -> Int
 calcTotalDistance =
     String.lines
-        -- remove empty first and last lines
+        -- trim empty lines
         >> List.filter ((/=) "")
         -- create list of tuples respective to lines
         >> List.map
