@@ -1,57 +1,72 @@
 module Day1.A exposing (..)
 
-import Data24 exposing (day1)
 import Html exposing (text)
+
+
+
+-- https://adventofcode.com/2024/day/1
+
+
+input =
+    """
+3   4
+4   3
+2   5
+1   3
+3   9
+3   3
+"""
 
 
 main : Html.Html msg
 main =
-    day1
+    input
         |> calcTotalDistance
-        |> String.fromInt
+        -- expected result
+        |> (==) 11
+        |> Debug.toString
         |> text
 
 
 calcTotalDistance : String -> Int
-calcTotalDistance s =
-    let
-        ( leftNums, rightNums ) =
-            s
-                |> String.lines
-                |> List.filter ((/=) "")
-                |> List.map
-                    (
-                    toLineStrings
-                        >> (\twoList ->
-                                case twoList of
-                                    [ a, b ] ->
-                                        ( a, b )
-
-                                    _ ->
-                                        ( "", "" )
-                           )
-
-                    )
-                |> List.unzip
-                |> Tuple.mapBoth (stringsAsInts >> List.sort) (stringsAsInts >> List.sort)
+calcTotalDistance =
+    String.lines
+        -- trim empty lines
+        >> List.filter ((/=) "")
+        -- create list of tuples respective to lines
+        >> List.map
+            (lineToTwoList >> List.map toInt >> twoListToTuple)
+        >> List.unzip
+        -- sort each column
+        >> Tuple.mapBoth List.sort List.sort
+        >> zip
+        >> List.map (\( l, r ) -> abs (l - r))
+        >> List.sum
 
 
-    in
-    pairs leftNums rightNums
-        |> List.map toDiffs
-        |> List.sum
+toInt : String -> Int
+toInt =
+    String.toInt >> Maybe.withDefault -1
 
-toLineStrings : String -> List (List String)
-toLineStrings = String.split "  " >> List.map String.trim
 
-stringsAsInts : List String -> List Int
-stringsAsInts =
-    List.map (String.toInt >> Maybe.withDefault -1)
-
-pairs : List a -> List b -> List ( a, b )
-pairs xs ys =
+zip : ( List a, List b ) -> List ( a, b )
+zip ( xs, ys ) =
     List.map2 Tuple.pair xs ys
 
-toDiffs : ( Int, Int ) -> Int
-toDiffs ( l, r ) =
-    abs (l - r)
+
+lineToTwoList : String -> List String
+lineToTwoList =
+    String.split "  " >> List.map String.trim
+
+
+twoListToTuple : List Int -> ( Int, Int )
+twoListToTuple list =
+    case list of
+        [ a, b ] ->
+            ( a, b )
+
+        a :: b :: _ ->
+            ( a, b )
+
+        _ ->
+            ( -1, -1 )
