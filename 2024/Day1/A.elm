@@ -15,23 +15,13 @@ main =
 calcTotalDistance : String -> Int
 calcTotalDistance s =
     let
-        asInts =
-            List.map (String.toInt >> Maybe.withDefault -1)
-
-        sortedAsInts =
-            asInts >> List.sort
-
-        pairs : List a -> List b -> List ( a, b )
-        pairs xs ys =
-            List.map2 Tuple.pair xs ys
-
-        ( left, right ) =
+        ( leftNums, rightNums ) =
             s
                 |> String.lines
                 |> List.filter ((/=) "")
                 |> List.map
-                    (String.split "  "
-                        >> List.map String.trim
+                    (
+                    toLineStrings
                         >> (\twoList ->
                                 case twoList of
                                     [ a, b ] ->
@@ -43,11 +33,25 @@ calcTotalDistance s =
 
                     )
                 |> List.unzip
-                |> Tuple.mapBoth sortedAsInts sortedAsInts
+                |> Tuple.mapBoth (stringsAsInts >> List.sort) (stringsAsInts >> List.sort)
 
-        lowestPairs =
-            pairs left right
+
     in
-    lowestPairs
-        |> List.map (\( l, r ) -> abs (l - r))
+    pairs leftNums rightNums
+        |> List.map toDiffs
         |> List.sum
+
+toLineStrings : String -> List (List String)
+toLineStrings = String.split "  " >> List.map String.trim
+
+stringsAsInts : List String -> List Int
+stringsAsInts =
+    List.map (String.toInt >> Maybe.withDefault -1)
+
+pairs : List a -> List b -> List ( a, b )
+pairs xs ys =
+    List.map2 Tuple.pair xs ys
+
+toDiffs : ( Int, Int ) -> Int
+toDiffs ( l, r ) =
+    abs (l - r)
