@@ -12,15 +12,15 @@ main! = |_args|
         |> List.drop_if(Str.is_empty)
         |> List.map(to_instruction)
 
-    List.walk(rotations
-        , |acc, rotation|
+    counts = List.walk(rotations, (0, 0), |(acc, count), rotation|
             when rotation is
-                Right(x) -> acc + x
-                Left(x) -> acc - x
-                Err ->
+                Right(x) -> (acc + x, if acc + x == 0 then count + 1 else count)
+                Left(x) -> (acc - x, if acc - x == 0 then count + 1 else count)
+                Err -> (acc, count)
+
     )
 
-    dbg rotations
+    dbg counts
     Stdout.line!("")
 
 to_instruction : Str -> [Right U8, Left U8, Err]
