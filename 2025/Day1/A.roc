@@ -14,8 +14,14 @@ main! = |_args|
 
     counts = List.walk(rotations, (0, 0), |(acc, count), rotation|
             when rotation is
-                Right(x) -> (acc + x, if acc + x == 0 then count + 1 else count)
-                Left(x) -> (acc - x, if acc - x == 0 then count + 1 else count)
+                Right(x) ->
+                    #newAcc = acc + x
+
+
+
+                    (acc + x, if acc + x == 0 then count + 1 else count)
+                Left(x) ->
+                    (acc - x, if acc - x == 0 then count + 1 else count)
                 Err -> (acc, count)
 
     )
@@ -23,7 +29,7 @@ main! = |_args|
     dbg counts
     Stdout.line!("")
 
-to_instruction : Str -> [Right U8, Left U8, Err]
+to_instruction : Str -> [Right I64, Left I64, Err]
 to_instruction = |str|
     when String.split_chars(str) is
         [head, .. as tail] ->

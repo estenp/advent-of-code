@@ -6,4 +6,4 @@ split_chars = |str|
         |> Str.to_utf8
         |> List.map(\b -> Str.from_utf8_lossy([b]))
 
-to_int = |str| Str.to_u8(str) ?? 0
+to_int = |str| Str.to_i64(str) ?? 0
