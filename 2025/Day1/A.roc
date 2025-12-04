@@ -21,21 +21,32 @@ main! = |_args|
             when rotation is
                 Right(inc_count) ->
                     incremented_pointer = pointer + inc_count
-                    newPointer = incremented_pointer % 100
+                    new_pointer = incremented_pointer % 100
 
-                    (newPointer, if newPointer == 0 then count + 1 else count)
+                    (new_pointer, if new_pointer == 0 then count + 1 else count)
 
                 Left(dec_count) ->
                     decremented_pointer = pointer - dec_count
+                    new_pointer = decremented_pointer % 100
+
+                    crash "problem is I'm not accounting for no remainder"
+
+                    if Num.is_negative(decremented_pointer) != Num.is_negative(new_pointer) then
+                        dbg (decremented_pointer, new_pointer)
+                        crash "not signed the same"
+                    else
+                        {}
 
                     newAcc =
-                        if Num.is_negative(decremented_pointer) then
-                            100 - (to_positive(decremented_pointer) % 100)
+                        if Num.is_negative(new_pointer) then
+                            #dbg (99 - to_positive(new_pointer))
+                            99 - to_positive(new_pointer)
                         else decremented_pointer
 
                     #dbg newAcc
 
                     (newAcc, if newAcc == 0 then count + 1 else count)
+
                 Err -> (pointer, count)
 
     )
