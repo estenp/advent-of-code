@@ -5,41 +5,39 @@ import String
 
 import "input.txt" as input : Str
 
-main! = |_args|
+Instruction : [Right I64, Left I64, Err]
 
-    rotations = input
+main! = |_args|
+    Stdout.line!(
+        input
         |> Str.split_on("\n")
         |> List.drop_if(Str.is_empty)
         |> List.map(to_instruction)
-
-    counts = List.walk(rotations, (50, 0), |(pointer, count), rotation|
-
-            when rotation is
-                Right(inc_count) ->
-                    incremented_pointer = pointer + inc_count
-                    new_pointer = incremented_pointer % 100
-
-                    (new_pointer, if new_pointer == 0 then count + 1 else count)
-
-                Left(dec_count) ->
-                    decremented_pointer = pointer - dec_count
-                    new_pointer = decremented_pointer % 100
-
-                    newAcc =
-                        if Num.is_negative(new_pointer) then
-                            100 - to_positive(new_pointer)
-                        else new_pointer
-
-                    dbg newAcc
-
-                    (newAcc, if newAcc == 0 then count + 1 else count)
-
-                Err -> (pointer, count)
-
+        |> List.walk((50, 0), count_zeros)
+        |> |(_, counts)| Num.to_str(counts),
     )
 
-    dbg counts
-    Stdout.line!("")
+count_zeros = |(pointer, count), instruction|
+    when instruction is
+        Right(inc_count) ->
+            incremented_pointer = pointer + inc_count
+            remainder = incremented_pointer % 100
+
+            (remainder, if remainder == 0 then count + 1 else count)
+
+        Left(dec_count) ->
+            decremented_pointer = pointer - dec_count
+            remainder = decremented_pointer % 100
+
+            new_pointer =
+                if Num.is_negative(remainder) then
+                    100 - to_positive(remainder)
+                else
+                    remainder
+
+            (new_pointer, if new_pointer == 0 then count + 1 else count)
+
+        Err -> (pointer, count)
 
 to_positive = |num|
     if Num.is_negative(num) then
@@ -47,7 +45,7 @@ to_positive = |num|
     else
         num
 
-to_instruction : Str -> [Right I64, Left I64, Err]
+to_instruction : Str -> Instruction
 to_instruction = |str|
     when String.split_chars(str) is
         [head, .. as tail] ->
