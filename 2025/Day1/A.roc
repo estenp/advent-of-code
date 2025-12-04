@@ -26,13 +26,12 @@ main! = |_args|
                     (newPointer, if newPointer == 0 then count + 1 else count)
 
                 Left(decrement) ->
-                    newPointer = pointer - decrement
+                    decremented_pointer = pointer - decrement
 
-                    hundreds = newPointer / 100
-
-                    dbg hundreds
-
-                    newAcc = if Num.is_negative newPointer then 100 - (to_positive(Num.round(newPointer) % 100)) else Num.round(newPointer)
+                    newAcc =
+                        if Num.is_negative(decremented_pointer) then
+                            100 - (to_positive(decremented_pointer) % 100)
+                        else decremented_pointer
 
                     (newAcc, if newAcc == 0 then count + 1 else count)
                 Err -> (pointer, count)
