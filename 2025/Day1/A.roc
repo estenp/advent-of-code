@@ -13,11 +13,7 @@ main! = |_args|
         |> List.map(to_instruction)
 
     counts = List.walk(rotations, (50, 0), |(pointer, count), rotation|
-            dbg pointer
-            dbg rotation
-            #if pointer > 99 || pointer < 0 then
-            #    crash "pointer out of bounds"
-            #else
+
             when rotation is
                 Right(inc_count) ->
                     incremented_pointer = pointer + inc_count
@@ -29,21 +25,12 @@ main! = |_args|
                     decremented_pointer = pointer - dec_count
                     new_pointer = decremented_pointer % 100
 
-                    crash "problem is I'm not accounting for no remainder"
-
-                    if Num.is_negative(decremented_pointer) != Num.is_negative(new_pointer) then
-                        dbg (decremented_pointer, new_pointer)
-                        crash "not signed the same"
-                    else
-                        {}
-
                     newAcc =
                         if Num.is_negative(new_pointer) then
-                            #dbg (99 - to_positive(new_pointer))
-                            99 - to_positive(new_pointer)
-                        else decremented_pointer
+                            100 - to_positive(new_pointer)
+                        else new_pointer
 
-                    #dbg newAcc
+                    dbg newAcc
 
                     (newAcc, if newAcc == 0 then count + 1 else count)
 
