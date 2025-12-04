@@ -3,7 +3,7 @@ app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/downl
 import pf.Stdout
 import String
 
-import "input.txt" as input : Str
+import "sample-input.txt" as input : Str
 
 main! = |_args|
 
@@ -12,22 +12,41 @@ main! = |_args|
         |> List.drop_if(Str.is_empty)
         |> List.map(to_instruction)
 
-    counts = List.walk(rotations, (0, 0), |(acc, count), rotation|
+    counts = List.walk(rotations, (50, 0), |(pointer, count), rotation|
+            dbg pointer
+            dbg rotation
+            #if pointer > 99 || pointer < 0 then
+            #    crash "pointer out of bounds"
+            #else
             when rotation is
-                Right(x) ->
-                    #newAcc = acc + x
+                Right(increment) ->
+                    incremented_pointer = pointer + increment
+                    newPointer = incremented_pointer % 100
 
+                    (newPointer, if newPointer == 0 then count + 1 else count)
 
+                Left(decrement) ->
+                    newPointer = pointer - decrement
 
-                    (acc + x, if acc + x == 0 then count + 1 else count)
-                Left(x) ->
-                    (acc - x, if acc - x == 0 then count + 1 else count)
-                Err -> (acc, count)
+                    hundreds = newPointer / 100
+
+                    dbg hundreds
+
+                    newAcc = if Num.is_negative newPointer then 100 - (to_positive(Num.round(newPointer) % 100)) else Num.round(newPointer)
+
+                    (newAcc, if newAcc == 0 then count + 1 else count)
+                Err -> (pointer, count)
 
     )
 
-    dbg counts
+    #dbg counts
     Stdout.line!("")
+
+to_positive = |num|
+    if Num.is_negative(num) then
+        Num.neg(num)
+    else
+        num
 
 to_instruction : Str -> [Right I64, Left I64, Err]
 to_instruction = |str|
