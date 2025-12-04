@@ -3,7 +3,7 @@ app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/downl
 import pf.Stdout
 import String
 
-import "sample-input.txt" as input : Str
+import "input.txt" as input : Str
 
 main! = |_args|
 
@@ -19,26 +19,28 @@ main! = |_args|
             #    crash "pointer out of bounds"
             #else
             when rotation is
-                Right(increment) ->
-                    incremented_pointer = pointer + increment
+                Right(inc_count) ->
+                    incremented_pointer = pointer + inc_count
                     newPointer = incremented_pointer % 100
 
                     (newPointer, if newPointer == 0 then count + 1 else count)
 
-                Left(decrement) ->
-                    decremented_pointer = pointer - decrement
+                Left(dec_count) ->
+                    decremented_pointer = pointer - dec_count
 
                     newAcc =
                         if Num.is_negative(decremented_pointer) then
                             100 - (to_positive(decremented_pointer) % 100)
                         else decremented_pointer
 
+                    #dbg newAcc
+
                     (newAcc, if newAcc == 0 then count + 1 else count)
                 Err -> (pointer, count)
 
     )
 
-    #dbg counts
+    dbg counts
     Stdout.line!("")
 
 to_positive = |num|
