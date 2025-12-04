@@ -8,15 +8,17 @@ import "input.txt" as input : Str
 Instruction : [Right I64, Left I64, Err]
 
 main! = |_args|
-    Stdout.line!(
-        input
-        |> Str.split_on "\n"
-        |> List.drop_if Str.is_empty
-        |> List.map to_instruction
-        |> List.walk (50, 0) count_zeros
-        |> |(_, counts)| Num.to_str counts,
-    )
+    Stdout.line!
+        (
+            input
+            |> Str.split_on "\n"
+            |> List.drop_if Str.is_empty
+            |> List.map to_instruction
+            |> List.walk (50, 0) count_zeros
+            |> |(_, counts)| Num.to_str counts
+        )
 
+count_zeros : (I64, I64), Instruction -> (I64, I64)
 count_zeros = |(pointer, count), instruction|
     when instruction is
         Right(inc_count) ->
