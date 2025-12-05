@@ -1,11 +1,8 @@
 app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
 
 import pf.Stdout
-import String
-
+import Util exposing [to_instruction, to_positive, Instruction]
 import "input.txt" as input : Str
-
-Instruction : [Right I64, Left I64, Err]
 
 main! = |_args|
     Stdout.line!
@@ -40,21 +37,3 @@ count_zeros = |(pointer, count), instruction|
             (new_pointer, if new_pointer == 0 then count + 1 else count)
 
         Err -> (pointer, count)
-
-to_positive = |num|
-    if Num.is_negative num then
-        Num.neg num
-    else
-        num
-
-to_instruction : Str -> Instruction
-to_instruction = |str|
-    when String.split_chars str is
-        [head, .. as tail] ->
-            tailInt = String.to_int Str.join_with(tail, "")
-            when head is
-                "R" -> Right(tailInt)
-                "L" -> Left(tailInt)
-                _ -> Err
-
-        _ -> Err
